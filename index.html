@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>DeepSeek Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f8f9fa;
+      position: relative; /* Adiciona um contexto para o ID ficar posicionado no canto inferior */
+    }
+    textarea, button {
+      width: 100%;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+    #response {
+      margin-top: 2rem;
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #userIdDisplay {
+      font-size: 0.8rem; /* Tamanho do ID reduzido */
+      color: #333;
+      position: bottom; /* Posiciona o ID no canto inferior */
+      bottom: 10px;
+      left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat com DeepSeek</h1>
+  <p id="userIdDisplay"></p> <!-- Exibe o ID no canto inferior esquerdo -->
+  <textarea id="prompt" rows="5" placeholder="Digite seu prompt aqui..."></textarea>
+  <button onclick="enviarPrompt()">Enviar</button>
+
+  <div id="response"></div>
+
+  <script>
+    window.onload = async () => {
+      const res = await fetch('/session');
+      const data = await res.json();
+      console.log('Sessão iniciada para o usuário:', data.userId);
+
+      // Exibir o ID gerado para o usuário
+      document.getElementById('userIdDisplay').textContent = `Seu ID de usuário: ${data.userId}`;
+    };
+
+    async function enviarPrompt() {
+      const prompt = document.getElementById('prompt').value;
+      const responseDiv = document.getElementById('response');
+
+      responseDiv.textContent = "Processando...";
+
+      try {
+        const res = await fetch('/deepseek', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await res.json();
+        responseDiv.textContent = data.response || JSON.stringify(data);
+      } catch (err) {
+        responseDiv.textContent = 'Erro ao se comunicar com o servidor.';
+      }
+    }
+  </script>
+</body>
+</html>
