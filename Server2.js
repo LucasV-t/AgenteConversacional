@@ -74,7 +74,7 @@ fastify.post('/deepseek', async (request, reply) => {
 
   try {
     // Aqui fazemos a chamada para o modelo DeepSeek
-    const modelUrl = 'http://localhost:11434/api/generate'; // Exemplo de URL, ajuste conforme necessário
+    const modelUrl = 'http://localhost:11434/api/generate';
 
     const modelResponse = await axios.post(modelUrl, {
       model: 'deepseek-r1:1.5b', // Nome do modelo
