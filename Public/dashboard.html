@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>DeepSeek Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body {
+      background: #121212;
+      color: #f8f9fa;
+    }
+    .chat-box {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #1e1e1e;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+    .chat-msg {
+      margin: 0.5rem 0;
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+    .user {
+      background: #0d6efd;
+      color: #fff;
+      margin-left: auto;
+    }
+    .assistant {
+      background: #2c2c2c;
+      color: #f8f9fa;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container py-4">
+    <div class="d-flex justify-content-between mb-3">
+      <h2>DeepSeek Chat</h2>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Abas -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#chat" type="button">Chat</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#db" type="button">Banco</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history" type="button">Histórico</button>
+      </li>
+    </ul>
+
+    <!-- Conteúdo -->
+    <div class="tab-content mt-3">
+      <!-- Aba Chat -->
+      <div class="tab-pane fade show active" id="chat">
+        <div class="chat-box mb-3" id="response"></div>
+        <textarea id="prompt" class="form-control mb-2 bg-dark text-white" rows="3" placeholder="Digite sua pergunta..."></textarea>
+        <button class="btn btn-primary w-100" onclick="enviarPrompt()">Enviar</button>
+      </div>
+
+      <!-- Aba Banco -->
+      <div class="tab-pane fade" id="db">
+        <textarea id="db-question" class="form-control mb-2 bg-dark text-white" rows="3" placeholder="Pergunte algo para o banco..."></textarea>
+        <button class="btn btn-success w-100" onclick="consultarBanco()">Consultar</button>
+        <div id="db-response" class="mt-3 p-3 bg-dark border rounded text-white"></div>
+      </div>
+
+      <!-- Aba Histórico -->
+      <div class="tab-pane fade" id="history">
+        <button class="btn btn-secondary mb-2" onclick="verHistorico()">Carregar Histórico</button>
+        <div class="chat-box" id="history-box"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function formatResponse(text) {
+    if (!text) return "";
+    let formatted = text
+      .replace(/^### (.*$)/gim, "<h3>$1</h3>")   // títulos nível 3
+      .replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>") // negrito
+      .replace(/\n/g, "<br>");                  // quebras de linha
+    return formatted.trim();
+  }
+
+  async function enviarPrompt() {
+    const prompt = document.getElementById('prompt').value;
+    const responseDiv = document.getElementById('response');
+    responseDiv.innerHTML += `<div class="chat-msg user"><b>Você:</b> ${prompt}</div>`;
+    try {
+      const res = await fetch('/deepseek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      const respostaFormatada = formatResponse(data.response || data.error);
+      responseDiv.innerHTML += `<div class="chat-msg assistant"><b>IA:</b> ${respostaFormatada}</div>`;
+      responseDiv.scrollTop = responseDiv.scrollHeight;
+      MathJax.typeset();
+    } catch {
+      responseDiv.innerHTML += `<div class="chat-msg assistant text-danger"><b>Erro:</b> Falha ao enviar prompt</div>`;
+    }
+  }
+
+  async function consultarBanco() {
+    const question = document.getElementById('db-question').value;
+    const responseDiv = document.getElementById('db-response');
+    responseDiv.textContent = "Consultando banco...";
+    try {
+      const res = await fetch('/querydb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      if (data.rows) {
+        responseDiv.innerHTML = "<b>Query:</b> " + data.query + "<br><br>" +
+          "<b>Resultados:</b><pre>" + JSON.stringify(data.rows, null, 2) + "</pre>";
+      } else {
+        responseDiv.textContent = data.error;
+      }
+    } catch {
+      responseDiv.textContent = "Erro ao consultar.";
+    }
+  }
+
+  async function verHistorico() {
+    const historyDiv = document.getElementById('history-box');
+    historyDiv.textContent = "Carregando histórico...";
+    try {
+      const res = await fetch('/history');
+      const data = await res.json();
+      if (data.history) {
+        historyDiv.innerHTML = "";
+        data.history.forEach(msg => {
+          const formatted = formatResponse(msg.content);
+          historyDiv.innerHTML += `<div class="chat-msg ${msg.role}"><b>${msg.role}:</b> ${formatted}</div>`;
+        });
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+        MathJax.typeset();
+      } else {
+        historyDiv.textContent = data.error;
+      }
+    } catch {
+      historyDiv.textContent = "Erro ao carregar histórico.";
+    }
+  }
+</script>
+
+</body>
+</html>
