@@ -1,119 +1,176 @@
-const Fastify = require('fastify');
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const cookie = require('@fastify/cookie');
-const axios = require('axios'); // Adicionando axios para a chamada ao modelo
+const Fastify = require("fastify");
+const path = require("path");
+const axios = require("axios");
+const fastifyCookie = require("@fastify/cookie");
+const { Pool } = require("pg");
 
-// Inicialize o Fastify
 const fastify = Fastify({ logger: true });
 
-// Registre o plugin de cookies
-fastify.register(cookie);
+// Conexão com Postgres
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "postgres",
+  password: "123",
+  port: 5432,
+});
 
-// Função para carregar o chatlog do arquivo JSON
-function loadChatlog(filePath) {
+// Cookies
+fastify.register(fastifyCookie);
+
+// Arquivos estáticos (front-end)
+fastify.register(require("@fastify/static"), {
+  root: path.join(__dirname, "public"),
+  prefix: "/",
+});
+
+// Rota inicial
+fastify.get("/", async (req, reply) => {
+  return reply.type("text/html").sendFile("index.html");
+});
+
+
+// ======================
+// ROTAS DE AUTENTICAÇÃO
+// ======================
+
+// Registrar usuário
+fastify.post("/register", async (req, reply) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return reply.status(400).send({ error: "Usuário e senha são obrigatórios" });
+  }
+
   try {
-    if (!fs.existsSync(filePath)) {
-      return {};
+    const result = await pool.query(
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
+      [username, password]
+    );
+    return reply.send({ message: "Usuário registrado com sucesso!", id: result.rows[0].id });
+  } catch (err) {
+    if (err.code === "23505") {
+      return reply.status(400).send({ error: "Usuário já existe" });
+    }
+    console.error(err);
+    return reply.status(500).send({ error: "Erro ao registrar usuário" });
+  }
+});
+
+// Login
+fastify.post("/login", async (req, reply) => {
+  const { username, password } = req.body;
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (result.rows.length === 0) {
+      return reply.status(400).send({ error: "Usuário não encontrado" });
     }
 
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    if (!raw.trim()) return {}; // Arquivo existe mas está vazio
+    const user = result.rows[0];
+    if (user.password !== password) {
+      return reply.status(400).send({ error: "Senha incorreta" });
+    }
 
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Erro ao carregar chatlog:', e.message);
-    return {};
+    reply.setCookie("user", username, { path: "/" });
+    return reply.send({ message: "Login realizado com sucesso", user: username, userId: user.id });
+  } catch (err) {
+    console.error(err);
+    return reply.status(500).send({ error: "Erro ao realizar login" });
   }
-}
-
-// Rota para criar ou carregar uma sessão (ID do usuário)
-fastify.get('/session', async (request, reply) => {
-  const chatlogPath = path.join(__dirname, 'chatlog.json');
-  const chatlog = loadChatlog(chatlogPath);
-
-  // Obtenha o userId do cookie
-  let userId = request.cookies.userId;
-
-  // Se o userId não existir ou não estiver registrado, cria um novo
-  if (!userId || !chatlog[userId]) {
-    userId = uuidv4(); // Gera um ID único
-    chatlog[userId] = []; // Cria uma entrada para o novo ID no chatlog
-    fs.writeFileSync(chatlogPath, JSON.stringify(chatlog, null, 2)); // Salva no arquivo
-  }
-
-  // Define o cookie com o ID do usuário
-  reply.setCookie('userId', userId, {
-    path: '/',
-    httpOnly: false,
-    maxAge: 60 * 60 * 24 * 30 // Expira em 30 dias
-  });
-
-  return reply.send({ message: 'Sessão ativa', userId });
 });
 
-// Rota para enviar o prompt para o modelo DeepSeek
-fastify.post('/deepseek', async (request, reply) => {
-  const { prompt } = request.body;
-  const userId = request.cookies.userId;
-  const chatlogPath = path.join(__dirname, 'chatlog.json');
+// Logout
+fastify.post("/logout", async (req, reply) => {
+  reply.clearCookie("user", { path: "/" });
+  return reply.send({ message: "Logout realizado com sucesso" });
+});
 
-  if (!userId) {
-    return reply.status(400).send({ error: 'ID do usuário não registrado.' });
+
+// ======================
+// ROTA DE CHAT COM IA
+// ======================
+
+fastify.post("/deepseek", async (req, reply) => {
+  const username = req.cookies.user;
+  if (!username) {
+    return reply.status(401).send({ error: "Não autenticado. Faça login primeiro." });
   }
 
+  const { prompt } = req.body;
   if (!prompt) {
-    return reply.status(400).send({ error: 'Prompt é obrigatório.' });
-  }
-
-  const chatlog = loadChatlog(chatlogPath);
-  if (!chatlog[userId]) {
-    return reply.status(401).send({ error: 'ID não encontrado. Registre-se primeiro.' });
+    return reply.status(400).send({ error: "Prompt é obrigatório." });
   }
 
   try {
-    // Aqui fazemos a chamada para o modelo DeepSeek
-    const modelUrl = 'http://localhost:11434/api/generate';
+    // Buscar ID do usuário logado
+    const userResult = await pool.query("SELECT id FROM users WHERE username = $1", [username]);
+    if (userResult.rows.length === 0) {
+      return reply.status(401).send({ error: "Usuário não encontrado." });
+    }
+    const userId = userResult.rows[0].id;
 
-    const modelResponse = await axios.post(modelUrl, {
-      model: 'deepseek-r1:1.5b', // Nome do modelo
+    // Chamar o modelo via Ollama
+    const response = await axios.post("http://localhost:11434/api/generate", {
+      model: "deepseek-r1:1.5b",
       prompt: prompt,
-      stream: false
-    })
-      .then(response => response.data.response) // Ajuste conforme o formato da resposta da API
-      .catch(error => {
-        console.error('Erro ao chamar o modelo:', error);
-        return 'Erro ao gerar a resposta do modelo.';
-      });
+      stream: false,
+    });
 
-    // Armazena a resposta no histórico do usuário
-    chatlog[userId].push({ user: prompt, assistant: modelResponse });
-    fs.writeFileSync(chatlogPath, JSON.stringify(chatlog, null, 2));
+    let modelResponse = response.data.response;
+
+    // Remover raciocínio interno <think>...</think>
+    modelResponse = modelResponse.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    // Salvar histórico no banco
+    await pool.query("INSERT INTO chatlog (user_id, role, content) VALUES ($1, $2, $3)", [userId, "user", prompt]);
+    await pool.query("INSERT INTO chatlog (user_id, role, content) VALUES ($1, $2, $3)", [userId, "assistant", modelResponse]);
 
     return reply.send({ response: modelResponse });
-  } catch (error) {
-    console.error(error);
-    return reply.status(500).send({ error: 'Erro ao consultar o modelo DeepSeek.' });
+  } catch (err) {
+    console.error(err);
+    return reply.status(500).send({ error: "Erro ao consultar o modelo DeepSeek." });
   }
 });
 
-// Serve arquivos estáticos do diretório 'public'
-fastify.register(require('@fastify/static'), {
-  root: path.join(__dirname, 'public'),
-  prefix: '/', // O caminho para acessar os arquivos estáticos será '/index.html'
+// ======================
+// ROTA: Histórico de mensagens
+// ======================
+fastify.get("/history", async (req, reply) => {
+  const username = req.cookies.user;
+  if (!username) {
+    return reply.status(401).send({ error: "Não autenticado. Faça login primeiro." });
+  }
+
+  try {
+    // Buscar ID do usuário
+    const userResult = await pool.query("SELECT id FROM users WHERE username = $1", [username]);
+    if (userResult.rows.length === 0) {
+      return reply.status(401).send({ error: "Usuário não encontrado." });
+    }
+    const userId = userResult.rows[0].id;
+
+    // Buscar mensagens
+    const history = await pool.query(
+      "SELECT role, content, created_at FROM chatlog WHERE user_id = $1 ORDER BY created_at ASC",
+      [userId]
+    );
+
+    return reply.send({ user: username, history: history.rows });
+  } catch (err) {
+    console.error(err);
+    return reply.status(500).send({ error: "Erro ao recuperar histórico." });
+  }
 });
 
-// Rota GET para retornar a página inicial
-fastify.get('/', async (request, reply) => {
-  reply.type('text/html').sendFile('index.html');
-});
 
-// Inicia o servidor
+// ======================
+// INICIAR SERVIDOR
+// ======================
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000, host: '0.0.0.0' });
-    console.log('Servidor rodando em http://localhost:3000');
+    await fastify.listen({ port: 3000, host: "0.0.0.0" });
+    console.log("Servidor rodando em http://localhost:3000");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
@@ -121,3 +178,5 @@ const start = async () => {
 };
 
 start();
+
+
