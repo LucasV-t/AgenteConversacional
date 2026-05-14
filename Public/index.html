@@ -2,64 +2,546 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DeepSeek - Login</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --dark-bg: #0f1419;
+      --card-bg: #1a1f2e;
+      --border-color: #2d3748;
+      --text-primary: #f8f9fa;
+      --text-secondary: #adb5bd;
+    }
+
     body {
-      background: #121212;
-      color: #f8f9fa;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1f2e 50%, #0d1b2a 100%);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
-    .card {
-      background: #1e1e1e;
-      color: #f8f9fa;
-      border: 1px solid #333;
+
+    /* Animated background elements */
+    .bg-decoration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
     }
+
+    .decoration-circle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.05;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .decoration-circle:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      background: var(--primary-color);
+      top: -150px;
+      left: -150px;
+      animation-delay: 0s;
+    }
+
+    .decoration-circle:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      background: var(--success-color);
+      bottom: -100px;
+      right: -100px;
+      animation-delay: 2s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) translateX(0px); }
+      25% { transform: translateY(-30px) translateX(20px); }
+      50% { transform: translateY(-60px) translateX(-20px); }
+      75% { transform: translateY(-30px) translateX(20px); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 450px;
+      width: 100%;
+      padding: 1rem;
+    }
+
+    .auth-card {
+      background: rgba(26, 31, 46, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .auth-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
     .form-control {
-      background: #2c2c2c;
-      border: 1px solid #444;
-      color: #f8f9fa;
+      background: rgba(44, 44, 44, 0.5);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .form-control:focus {
+      background: rgba(44, 44, 44, 0.7);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+      color: var(--text-primary);
+    }
+
+    .btn-auth {
+      width: 100%;
+      padding: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-login {
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      color: white;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
+      color: white;
+    }
+
+    .btn-register {
+      background: rgba(13, 110, 253, 0.1);
+      color: var(--primary-color);
+      border: 1px solid rgba(13, 110, 253, 0.3);
+    }
+
+    .btn-register:hover {
+      background: rgba(13, 110, 253, 0.2);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-auth:active {
+      transform: translateY(0);
+    }
+
+    .btn-auth:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      gap: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .auth-response {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-response.show {
+      display: block;
+    }
+
+    .auth-response.success {
+      background: rgba(25, 135, 84, 0.1);
+      color: #58d4f1;
+      border: 1px solid rgba(25, 135, 84, 0.3);
+    }
+
+    .auth-response.error {
+      background: rgba(220, 53, 69, 0.1);
+      color: #ff6b6b;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .form-hint {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .auth-title {
+        font-size: 1.5rem;
+      }
+
+      .auth-logo {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
-<body class="d-flex justify-content-center align-items-center vh-100">
-  <div class="card shadow p-4" style="max-width: 400px; width: 100%;">
-    <h2 class="text-center mb-3">Login</h2>
-    <input type="text" id="username" class="form-control mb-2" placeholder="Usuário">
-    <input type="password" id="password" class="form-control mb-3" placeholder="Senha">
-    <button class="btn btn-primary w-100 mb-2" onclick="login()">Entrar</button>
-    <button class="btn btn-secondary w-100" onclick="register()">Registrar</button>
-    <div id="auth-response" class="mt-3 text-center text-danger"></div>
+<body>
+  <!-- Background Decoration -->
+  <div class="bg-decoration">
+    <div class="decoration-circle"></div>
+    <div class="decoration-circle"></div>
   </div>
 
+  <!-- Auth Container -->
+  <div class="container">
+    <div class="auth-card">
+      <!-- Header -->
+      <div class="auth-header">
+        <div class="auth-logo">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h1 class="auth-title">DeepSeek Chat</h1>
+        <p class="auth-subtitle">Agente Conversacional Inteligente</p>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">
+            <i class="fas fa-user"></i> Usuário
+          </label>
+          <input 
+            type="text" 
+            id="username" 
+            class="form-control" 
+            placeholder="Digite seu usuário"
+            autocomplete="username"
+          >
+          <div class="form-hint">Seu nome de usuário único</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">
+            <i class="fas fa-lock"></i> Senha
+          </label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-control" 
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+          >
+          <div class="form-hint">Mínimo 6 caracteres</div>
+        </div>
+
+        <button class="btn-auth btn-login" onclick="login()" id="loginBtn">
+          <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+
+        <div class="divider">ou</div>
+
+        <button class="btn-auth btn-register" onclick="toggleForm()" id="registerToggle">
+          <i class="fas fa-user-plus"></i> Criar Conta
+        </button>
+
+        <div id="auth-response" class="auth-response"></div>
+      </div>
+
+      <!-- Register Form (Hidden) -->
+      <div id="register-form" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="register-username">
+            <i class="fas fa-user"></i> Novo Usuário
+          </label>
+          <input 
+            type="text" 
+            id="register-username" 
+            class="form-control" 
+            placeholder="Escolha um usuário"
+            autocomplete="username"
+          >
+          <div class="form-hint">Use apenas letras, números e underscores</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-password">
+            <i class="fas fa-lock"></i> Senha
+          </label>
+          <input 
+            type="password" 
+            id="register-password" 
+            class="form-control" 
+            placeholder="Crie uma senha forte"
+            autocomplete="new-password"
+          >
+          <div class="form-hint">Mínimo 6 caracteres</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-password-confirm">
+            <i class="fas fa-check-circle"></i> Confirmar Senha
+          </label>
+          <input 
+            type="password" 
+            id="register-password-confirm" 
+            class="form-control" 
+            placeholder="Confirme sua senha"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <button class="btn-auth btn-login" onclick="register()" id="registerBtn">
+          <i class="fas fa-user-check"></i> Registrar
+        </button>
+
+        <button class="btn-auth btn-register" onclick="toggleForm()">
+          <i class="fas fa-arrow-left"></i> Voltar ao Login
+        </button>
+
+        <div id="auth-response-register" class="auth-response"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    async function register() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-      document.getElementById('auth-response').textContent = data.message || data.error;
+    function toggleForm() {
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
+      registerForm.style.display = registerForm.style.display === 'none' ? 'block' : 'none';
+      clearMessages();
+    }
+
+    function showMessage(message, type, isRegister = false) {
+      const responseDiv = isRegister 
+        ? document.getElementById('auth-response-register') 
+        : document.getElementById('auth-response');
+      responseDiv.textContent = message;
+      responseDiv.className = `auth-response show ${type}`;
+      setTimeout(() => {
+        responseDiv.classList.remove('show');
+      }, 5000);
+    }
+
+    function clearMessages() {
+      document.getElementById('auth-response').classList.remove('show');
+      document.getElementById('auth-response-register').classList.remove('show');
     }
 
     async function login() {
-      const username = document.getElementById('username').value;
+      const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      const res = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-      if (data.message) {
-        window.location.href = "dashboard.html"; // redireciona
-      } else {
-        document.getElementById('auth-response').textContent = data.error;
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (!username || !password) {
+        showMessage('Por favor, preencha todos os campos', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.message) {
+          showMessage('✓ Login realizado com sucesso!', 'success');
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 1000);
+        } else {
+          showMessage(data.error || 'Erro ao fazer login', 'error');
+        }
+      } catch (err) {
+        showMessage('Erro de conexão. Tente novamente.', 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
       }
     }
+
+    async function register() {
+      const username = document.getElementById('register-username').value.trim();
+      const password = document.getElementById('register-password').value;
+      const passwordConfirm = document.getElementById('register-password-confirm').value;
+      const registerBtn = document.getElementById('registerBtn');
+
+      if (!username || !password || !passwordConfirm) {
+        showMessage('Por favor, preencha todos os campos', 'error', true);
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showMessage('As senhas não coincidem', 'error', true);
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('A senha deve ter no mínimo 6 caracteres', 'error', true);
+        return;
+      }
+
+      registerBtn.disabled = true;
+      registerBtn.innerHTML = '<span class="loading-spinner"></span> Registrando...';
+
+      try {
+        const res = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.message) {
+          showMessage('✓ Conta criada com sucesso! Redirecionando...', 'success', true);
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 1500);
+        } else {
+          showMessage(data.error || 'Erro ao registrar', 'error', true);
+        }
+      } catch (err) {
+        showMessage('Erro de conexão. Tente novamente.', 'error', true);
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = '<i class="fas fa-user-check"></i> Registrar';
+      }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        if (loginForm.style.display !== 'none') {
+          login();
+        } else {
+          register();
+        }
+      }
+    });
   </script>
 </body>
 </html>
-

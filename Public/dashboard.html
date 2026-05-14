@@ -2,161 +2,811 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Protótipo de Agente Conversacional</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agente Conversacional - Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --dark-bg: #0f1419;
+      --card-bg: #1a1f2e;
+      --border-color: #2d3748;
+      --text-primary: #f8f9fa;
+      --text-secondary: #adb5bd;
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-color) var(--card-bg);
+    }
+
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: var(--card-bg);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      border-radius: 4px;
+    }
+
     body {
-      background: #121212;
-      color: #f8f9fa;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1f2e 100%);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
     }
-    .chat-box {
-      max-height: 400px;
+
+    .navbar {
+      background: rgba(15, 20, 25, 0.95) !important;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      padding: 1rem 2rem;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .navbar-text {
+      color: var(--text-secondary) !important;
+      font-size: 0.9rem;
+    }
+
+    .main-container {
+      display: flex;
+      min-height: calc(100vh - 70px);
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem 0;
       overflow-y: auto;
-      padding: 1rem;
-      background: #1e1e1e;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-section {
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.5px;
+      padding: 0 0.5rem;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
       border-radius: 8px;
-      border: 1px solid #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      border-left: 3px solid transparent;
     }
+
+    .sidebar-item:hover {
+      background: rgba(13, 110, 253, 0.1);
+      color: var(--primary-color);
+      border-left-color: var(--primary-color);
+      transform: translateX(4px);
+    }
+
+    .sidebar-item.active {
+      background: rgba(13, 110, 253, 0.15);
+      color: var(--primary-color);
+      border-left-color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .sidebar-item i {
+      margin-right: 0.75rem;
+      width: 18px;
+      text-align: center;
+    }
+
+    .user-card {
+      background: rgba(13, 110, 253, 0.1);
+      border: 1px solid rgba(13, 110, 253, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: auto;
+      text-align: center;
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+      font-size: 1.5rem;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .user-status {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      background: var(--success-color);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+
+    .nav-tabs {
+      border-bottom: 1px solid var(--border-color);
+      gap: 0.5rem;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+
+    .nav-link.active {
+      color: var(--primary-color);
+      background: transparent;
+      border-bottom-color: var(--primary-color);
+    }
+
+    .tab-content {
+      margin-top: 1.5rem;
+    }
+
+    .chat-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      min-height: 400px;
+      max-height: 500px;
+      overflow-y: auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
     .chat-msg {
-      margin: 0.5rem 0;
-      padding: 0.6rem 1rem;
-      border-radius: 10px;
-      max-width: 90%;
+      margin: 1rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      max-width: 85%;
       word-wrap: break-word;
+      animation: slideIn 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
-    .user {
-      background: #0d6efd;
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-msg.user {
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
       color: #fff;
       margin-left: auto;
+      border-bottom-right-radius: 4px;
     }
-    .assistant {
-      background: #2c2c2c;
-      color: #f8f9fa;
+
+    .chat-msg.assistant {
+      background: var(--border-color);
+      color: var(--text-primary);
       margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-msg b {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      opacity: 0.9;
+    }
+
+    .chat-msg pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.5rem 0 0 0;
+      font-size: 0.875rem;
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .chat-msg code {
+      color: #58d4f1;
+      font-family: 'Courier New', monospace;
+    }
+
+    .form-control {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-control:focus {
+      background: var(--card-bg);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+      color: var(--text-primary);
+    }
+
+    .form-control::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+      background: linear-gradient(135deg, #0a58ca, #0d47a1);
+      color: white;
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success-color), #157347);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+      background: linear-gradient(135deg, #157347, #0d3622);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger-color), #bb2d3b);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+      background: linear-gradient(135deg, #bb2d3b, #842029);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(108, 117, 125, 0.2);
+      border: 1px solid rgba(108, 117, 125, 0.3);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(108, 117, 125, 0.3);
+      border-color: var(--secondary-color);
+      color: var(--text-primary);
+    }
+
+    .db-response {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      min-height: 200px;
+      overflow-x: auto;
+    }
+
+    .db-response pre {
+      margin: 0;
+      color: #58d4f1;
+      font-size: 0.85rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .badge {
+      background: rgba(13, 110, 253, 0.2);
+      color: var(--primary-color);
+      border: 1px solid rgba(13, 110, 253, 0.3);
+      padding: 0.35rem 0.65rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .main-container {
+        flex-direction: column;
+      }
+
+      .content-area {
+        padding: 1rem;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chat-msg {
+        max-width: 100%;
+      }
+
+      .page-title {
+        font-size: 1.25rem;
+      }
+
+      .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="container py-4">
-    <div class="d-flex justify-content-between mb-3">
-      <h2>Protótipo de Agente Conversacional</h2>
-      <button class="btn btn-danger" onclick="logout()">Logout</button>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-robot"></i> DeepSeek Chat
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="ms-auto d-flex align-items-center gap-3">
+          <span class="navbar-text">
+            <i class="fas fa-circle text-success"></i> Online
+          </span>
+          <button class="btn btn-danger btn-sm" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <i class="fas fa-compass"></i> Menu
+        </div>
+        <a class="sidebar-item active" onclick="switchTab('chat')">
+          <i class="fas fa-comments"></i>
+          <span>Chat</span>
+        </a>
+        <a class="sidebar-item" onclick="switchTab('db')">
+          <i class="fas fa-database"></i>
+          <span>Consultar BD</span>
+        </a>
+        <a class="sidebar-item" onclick="switchTab('history')">
+          <i class="fas fa-history"></i>
+          <span>Histórico</span>
+        </a>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="user-card">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-name">Usuário</div>
+          <div class="user-status">
+            <span class="status-indicator"></span>
+            Conectado
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Abas -->
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-      <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#chat" type="button">Chat</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#db" type="button">Banco</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history" type="button">Histórico</button>
-      </li>
-    </ul>
-
-    <!-- Conteúdo -->
-    <div class="tab-content mt-3">
-      <!-- Aba Chat -->
-      <div class="tab-pane fade show active" id="chat">
-        <div class="chat-box mb-3" id="response"></div>
-        <textarea id="prompt" class="form-control mb-2 bg-dark text-white" rows="3" placeholder="Digite sua pergunta..."></textarea>
-        <button class="btn btn-primary w-100" onclick="enviarPrompt()">Enviar</button>
+    <!-- Content Area -->
+    <div class="content-area">
+      <div class="page-header">
+        <h1 class="page-title">
+          <i class="fas fa-comments"></i> Agente Conversacional
+        </h1>
       </div>
 
-      <!-- Aba Banco -->
-      <div class="tab-pane fade" id="db">
-        <textarea id="db-question" class="form-control mb-2 bg-dark text-white" rows="3" placeholder="Pergunte algo para o banco..."></textarea>
-        <button class="btn btn-success w-100" onclick="consultarBanco()">Consultar</button>
-        <div id="db-response" class="mt-3 p-3 bg-dark border rounded text-white"></div>
-      </div>
+      <!-- Tabs Navigation -->
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+            <i class="fas fa-comments"></i> Chat
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="db-tab" data-bs-toggle="tab" data-bs-target="#db" type="button" role="tab">
+            <i class="fas fa-database"></i> Banco de Dados
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+            <i class="fas fa-history"></i> Histórico
+          </button>
+        </li>
+      </ul>
 
-      <!-- Aba Histórico -->
-      <div class="tab-pane fade" id="history">
-        <button class="btn btn-secondary mb-2" onclick="verHistorico()">Carregar Histórico</button>
-        <div class="chat-box" id="history-box"></div>
+      <!-- Tab Content -->
+      <div class="tab-content mt-3">
+        <!-- Chat Tab -->
+        <div class="tab-pane fade show active" id="chat" role="tabpanel">
+          <div class="chat-box" id="response">
+            <div class="empty-state">
+              <i class="fas fa-comments"></i>
+              <p>Inicie uma conversa digitando sua pergunta abaixo</p>
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-12 col-lg-9">
+              <textarea 
+                id="prompt" 
+                class="form-control" 
+                rows="3" 
+                placeholder="Digite sua pergunta aqui... (Shift+Enter para nova linha, Enter para enviar)"
+              ></textarea>
+            </div>
+            <div class="col-12 col-lg-3 d-flex align-items-end">
+              <button class="btn btn-primary w-100" onclick="enviarPrompt()" id="sendBtn">
+                <i class="fas fa-paper-plane"></i> Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Database Tab -->
+        <div class="tab-pane fade" id="db" role="tabpanel">
+          <div class="row g-2 mb-3">
+            <div class="col-12 col-lg-9">
+              <textarea 
+                id="db-question" 
+                class="form-control" 
+                rows="3" 
+                placeholder="Faça uma pergunta sobre o banco de dados..."
+              ></textarea>
+            </div>
+            <div class="col-12 col-lg-3 d-flex align-items-end">
+              <button class="btn btn-success w-100" onclick="consultarBanco()" id="queryBtn">
+                <i class="fas fa-search"></i> Consultar
+              </button>
+            </div>
+          </div>
+          <div class="db-response" id="db-response">
+            <div class="empty-state">
+              <i class="fas fa-database"></i>
+              <p>Faça uma pergunta para consultar o banco de dados</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-pane fade" id="history" role="tabpanel">
+          <button class="btn btn-secondary mb-3" onclick="verHistorico()" id="historyBtn">
+            <i class="fas fa-sync-alt"></i> Carregar Histórico
+          </button>
+          <div class="chat-box" id="history-box">
+            <div class="empty-state">
+              <i class="fas fa-history"></i>
+              <p>Clique em "Carregar Histórico" para ver suas conversas anteriores</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-<script>
-  function formatResponse(text) {
-    if (!text) return "";
-    let formatted = text
-      .replace(/^### (.*$)/gim, "<h3>$1</h3>")   // títulos nível 3
-      .replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>") // negrito
-      .replace(/\n/g, "<br>");                  // quebras de linha
-    return formatted.trim();
-  }
+  <script>
+    function switchTab(tabName) {
+      const tab = document.getElementById(tabName + '-tab');
+      if (tab) {
+        const bsTab = new bootstrap.Tab(tab);
+        bsTab.show();
+      }
+      updateSidebarActive(tabName);
+    }
 
-  async function enviarPrompt() {
-    const prompt = document.getElementById('prompt').value;
-    const responseDiv = document.getElementById('response');
-    responseDiv.innerHTML += `<div class="chat-msg user"><b>Você:</b> ${prompt}</div>`;
-    try {
-      const res = await fetch('/deepseek', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+    function updateSidebarActive(tabName) {
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
       });
-      const data = await res.json();
-      const respostaFormatada = formatResponse(data.response || data.error);
-      responseDiv.innerHTML += `<div class="chat-msg assistant"><b>IA:</b> ${respostaFormatada}</div>`;
+      const activeItem = document.querySelector(`.sidebar-item[onclick="switchTab('${tabName}')"]`);
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+    }
+
+    function formatResponse(text) {
+      if (!text) return "";
+      let formatted = text
+        .replace(/^### (.*$)/gim, "<h3 style='margin-top: 1rem; margin-bottom: 0.5rem;'>$1</h3>")
+        .replace(/^## (.*$)/gim, "<h2 style='margin-top: 1rem; margin-bottom: 0.5rem;'>$1</h2>")
+        .replace(/^# (.*$)/gim, "<h1 style='margin-top: 1rem; margin-bottom: 0.5rem;'>$1</h1>")
+        .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/gim, "<em>$1</em>")
+        .replace(/`(.*?)`/gim, "<code>$1</code>")
+        .replace(/\n/g, "<br>");
+      return formatted.trim();
+    }
+
+    async function enviarPrompt() {
+      const prompt = document.getElementById('prompt').value.trim();
+      const responseDiv = document.getElementById('response');
+      const sendBtn = document.getElementById('sendBtn');
+
+      if (!prompt) return;
+
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="loading-spinner"></span> Enviando...';
+
+      const emptyState = responseDiv.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      responseDiv.innerHTML += `<div class="chat-msg user"><b>Você:</b> ${formatResponse(prompt)}</div>`;
+      document.getElementById('prompt').value = '';
       responseDiv.scrollTop = responseDiv.scrollHeight;
-      MathJax.typeset();
-    } catch {
-      responseDiv.innerHTML += `<div class="chat-msg assistant text-danger"><b>Erro:</b> Falha ao enviar prompt</div>`;
-    }
-  }
 
-  async function consultarBanco() {
-    const question = document.getElementById('db-question').value;
-    const responseDiv = document.getElementById('db-response');
-    responseDiv.textContent = "Consultando banco...";
-    try {
-      const res = await fetch('/querydb', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question })
-      });
-      const data = await res.json();
-      if (data.rows) {
-        responseDiv.innerHTML = "<b>Query:</b> " + data.query + "<br><br>" +
-          "<b>Resultados:</b><pre>" + JSON.stringify(data.rows, null, 2) + "</pre>";
-      } else {
-        responseDiv.textContent = data.error;
-      }
-    } catch {
-      responseDiv.textContent = "Erro ao consultar.";
-    }
-  }
-
-  async function verHistorico() {
-    const historyDiv = document.getElementById('history-box');
-    historyDiv.textContent = "Carregando histórico...";
-    try {
-      const res = await fetch('/history');
-      const data = await res.json();
-      if (data.history) {
-        historyDiv.innerHTML = "";
-        data.history.forEach(msg => {
-          const formatted = formatResponse(msg.content);
-          historyDiv.innerHTML += `<div class="chat-msg ${msg.role}"><b>${msg.role}:</b> ${formatted}</div>`;
+      try {
+        const res = await fetch('/deepseek', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
         });
-        historyDiv.scrollTop = historyDiv.scrollHeight;
+
+        const data = await res.json();
+        const respostaFormatada = formatResponse(data.response || data.error || 'Sem resposta');
+        responseDiv.innerHTML += `<div class="chat-msg assistant"><b>IA:</b> ${respostaFormatada}</div>`;
+        responseDiv.scrollTop = responseDiv.scrollHeight;
         MathJax.typeset();
-      } else {
-        historyDiv.textContent = data.error;
+      } catch (err) {
+        console.error('Erro:', err);
+        responseDiv.innerHTML += `<div class="chat-msg assistant" style="background: rgba(220, 53, 69, 0.2); border-left: 3px solid #dc3545;"><b>Erro:</b> Falha ao enviar prompt</div>`;
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
+        document.getElementById('prompt').focus();
       }
-    } catch {
-      historyDiv.textContent = "Erro ao carregar histórico.";
     }
-  }
-</script>
+
+    async function consultarBanco() {
+      const question = document.getElementById('db-question').value.trim();
+      const responseDiv = document.getElementById('db-response');
+      const queryBtn = document.getElementById('queryBtn');
+
+      if (!question) return;
+
+      queryBtn.disabled = true;
+      queryBtn.innerHTML = '<span class="loading-spinner"></span> Consultando...';
+
+      const emptyState = responseDiv.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      try {
+        const res = await fetch('/querydb', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        if (data.rows) {
+          responseDiv.innerHTML = "<b>Query Gerada:</b><pre style='margin: 0.5rem 0;'>" + data.query + "</pre><br><b>Resultados:</b><pre>" + JSON.stringify(data.rows, null, 2) + "</pre>";
+        } else {
+          responseDiv.innerHTML = "<div style='color: #ff6b6b;'><b>Erro:</b> " + (data.error || 'Erro desconhecido') + "</div>";
+        }
+      } catch (err) {
+        console.error('Erro:', err);
+        responseDiv.innerHTML = "<div style='color: #ff6b6b;'><b>Erro:</b> Falha ao consultar o banco de dados</div>";
+      } finally {
+        queryBtn.disabled = false;
+        queryBtn.innerHTML = '<i class="fas fa-search"></i> Consultar';
+      }
+    }
+
+    async function verHistorico() {
+      const historyDiv = document.getElementById('history-box');
+      const historyBtn = document.getElementById('historyBtn');
+
+      historyBtn.disabled = true;
+      historyBtn.innerHTML = '<span class="loading-spinner"></span> Carregando...';
+
+      const emptyState = historyDiv.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      try {
+        const res = await fetch('/history');
+        const data = await res.json();
+        if (data.history && data.history.length > 0) {
+          historyDiv.innerHTML = "";
+          data.history.forEach(msg => {
+            const formatted = formatResponse(msg.content);
+            historyDiv.innerHTML += `<div class="chat-msg ${msg.role}"><b>${msg.role === 'user' ? 'Você' : 'IA'}:</b> ${formatted}</div>`;
+          });
+          historyDiv.scrollTop = historyDiv.scrollHeight;
+          MathJax.typeset();
+        } else {
+          historyDiv.innerHTML = "<div class='empty-state'><i class='fas fa-inbox'></i><p>Nenhum histórico disponível</p></div>";
+        }
+      } catch (err) {
+        console.error('Erro:', err);
+        historyDiv.innerHTML = "<div style='color: #ff6b6b;'><b>Erro:</b> Falha ao carregar o histórico</div>";
+      } finally {
+        historyBtn.disabled = false;
+        historyBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Carregar Histórico';
+      }
+    }
+
+    function logout() {
+      if (confirm('Tem certeza que deseja fazer logout?')) {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Allow Enter to send, Shift+Enter for new line
+    document.getElementById('prompt').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarPrompt();
+      }
+    });
+
+    document.getElementById('db-question').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        consultarBanco();
+      }
+    });
+  </script>
 
 </body>
 </html>
